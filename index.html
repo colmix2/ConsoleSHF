@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.H.F // BIOWEAPON PROTOCOL v1.0</title>
+    <style>
+        :root {
+            --glow: #e6a100;       /* Тактический песочно-жёлтый неон */
+            --glow-dim: #735000;   /* Тёмно-горчичный для полевых рамок */
+            --bg: #080602;         /* Глубокий оливково-чёрный фон */
+            --bg-panel: rgba(20, 15, 10, 0.95); /* Тяжёлый бронированный блиндаж */
+            --err: #ff1111;        
+            --acc: #00ff66;        /* Кислотно-зелёный для штаммов вируса */
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--glow);
+            font-family: 'Courier New', monospace;
+            font-size: 16px;       
+            font-weight: 700;      
+            margin: 0;
+            padding: 40px 20px;
+            min-height: 100vh;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+        body::before, body::after {
+            content: " ";
+            display: block;
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(rgba(230, 161, 0, 0.02) 50%, rgba(0, 0, 0, 0.5) 50%), linear-gradient(90deg, rgba(230, 161, 0, 0.03), rgba(0, 0, 0, 0), rgba(230, 161, 0, 0.03));
+            z-index: 999;
+            background-size: 100% 4px, 6px 100%;
+            pointer-events: none;
+        }
+        body::after {
+            background: linear-gradient(rgba(0, 0, 0, 0) 90%, rgba(230, 161, 0, 0.05) 95%, rgba(0, 0, 0, 0) 100%);
+            background-size: 100% 300%;
+            animation: scanline 7s linear infinite;
+            z-index: 1000;
+        }
+        @keyframes scanline {
+            0% { background-position: 0 -300%; }
+            100% { background-position: 0 300%; }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0); }
+            20%, 60% { transform: translate(-4px, 1px); }
+            40%, 80% { transform: translate(4px, -1px); }
+        }
+        .shake { animation: shake 0.2s ease-in-out 2; }
+        .terminal-box {
+            width: 100%;
+            max-width: 850px;
+            background: var(--bg-panel);
+            border: 2px solid var(--glow-dim); 
+            border-radius: 4px;
+            padding: 35px;
+            box-shadow: 0 0 30px rgba(230, 161, 0, 0.15), inset 0 0 20px rgba(230, 161, 0, 0.1);
+            backdrop-filter: blur(12px);
+            position: relative;
+        }
+        .header {
+            color: var(--glow);
+            border-bottom: 2px solid rgba(230, 161, 0, 0.25);
+            padding-bottom: 18px;
+            margin-bottom: 25px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(230, 161, 0, 0.6); 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .header-logo-text {
+            font-size: 32px;
+            letter-spacing: 6px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 15px var(--glow);
+        }
+        .line {
+            line-height: 1.6;
+            margin-bottom: 10px;
+            word-break: break-all;
+            white-space: pre-wrap;
+            text-shadow: 0 0 4px rgba(230, 161, 0, 0.2); 
+        }
+        .input-line {
+            display: flex;
+            align-items: center;
+            margin-top: 25px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s;
+        }
+        .input-line.active { opacity: 1; visibility: visible; }
+        .prompt {
+            margin-right: 12px;
+            color: var(--glow);
+            font-weight: bold;
+            flex-shrink: 0;
+            letter-spacing: 1px;
+            text-shadow: 0 0 6px var(--glow);
+        }
+        .input-wrapper {
+            position: relative;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+        }
+        input {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            background: transparent;
+            border: none;
+            outline: none;
+            cursor: default;
+        }
+        .custom-view {
+            color: #ffffff;        
+            font-family: inherit;
+            font-size: inherit;
+            font-weight: bold;
+            white-space: pre-wrap;
+            display: inline-flex;
+            align-items: center;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+        }
+        .custom-view::after {
+            content: '_';
+            margin-left: 4px;
+            color: var(--glow);     
+            animation: blink 0.8s infinite;
+            text-shadow: 0 0 10px var(--glow);
+        }
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+        .error { color: var(--err); font-weight: bold; text-shadow: 0 0 10px rgba(255, 17, 17, 0.6); }
+        .success { color: var(--acc); font-weight: bold; text-shadow: 0 0 10px rgba(0, 255, 102, 0.6); }
+        .gray { color: rgba(230, 161, 0, 0.45); } 
+    </style>
+</head>
+<body>
+<div class="terminal-box" id="term">
+    <div class="header" id="hd">
+        <div class="header-logo-text">[ S.H.F ]</div>
+        SECRET HIGHLY FIGHTERS // BIOWEAPON & CHEMICAL WARFARE NETWORK
+    </div>
+    <div id="out"></div>
+    <div class="input-line" id="blk">
+        <span class="prompt" id="pr">ENTER LAB CODE:</span>
+        <div class="input-wrapper">
+            <input type="text" id="inp" autocomplete="off" disabled>
+            <div class="custom-view" id="view"></div>
+        </div>
+    </div>
+</div>
+<script>
+const CFG = { 
+    REAL_TOKEN: "z-virus outbreak", // Истинный токен доступа в биологическое крыло
+    SPD: 15 
+};
+const DOM = { 
+    term: document.getElementById('term'), 
+    inp: document.getElementById('inp'), 
+    view: document.getElementById('view'), 
+    out: document.getElementById('out'), 
+    pr: document.getElementById('pr'), 
+    blk: document.getElementById('blk') 
+};
+let step = 'login', isMask = false, dialogueStage = 0, wordTimer = null;
+let strikes = 0; 
+const delay = ms => new Promise(r => setTimeout(r, ms));
+
+let audioCtx = null;
+
+function playBeep(f, t, d) {
+    try {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = t; 
+        osc.frequency.value = f; 
+        g.gain.setValueAtTime(0.02, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + d);
+        osc.connect(g); 
+        g.connect(audioCtx.destination); 
+        osc.start(); 
+        osc.stop(audioCtx.currentTime + d);
+    } catch(e) {}
+}
+
+function addLine(txt, cls = "") {
+    const d = document.createElement('div'); 
+    d.className = `line ${cls}`; 
+    d.textContent = txt; 
+    DOM.out.appendChild(d);
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); 
+    return d;
+}
+async function type(txt, cls = "") {
+    const d = addLine("", cls);
+    for (let i = 0; i < txt.length; i++) {
+        d.textContent += txt.charAt(i); 
+        if (Math.random() > 0.3) playBeep(700, 'square', 0.015); 
+        await delay(CFG.SPD);
+    }
+}
+
+// Полевые логи секретного лагеря SHF возле сибирского комплекса
+async function runBootLogs() {
+    const p = [
+        "DEPLOYING FIELD CAMP SERVERS... ONLINE", 
+        "CONNECTING AIR SPRAY BLOCKS... INSTALLED", 
+        "ISOLATING MUTATED CELLS BOXES... LOCKED", 
+        "EXTRACTING STRAINS OF 'Z-VIRUS'... SUCCESS", 
+        "BIOWEAPON EXPERIMENT SYSTEM STATUS: ACTIVE."
+    ];
+    for (let i = 0; i < p.length; i++) {
+        await delay(120 + Math.random() * 120); 
+        addLine("[S.H.F-LAB] | " + p[i], 'gray'); 
+        playBeep(110, 'sawtooth', 0.01);
+    }
+    await delay(400); 
+    await type("SYS: CLASSIFIED GOVERNMENT AREA. AUTHORIZATION REQUIRED.", "gray");
+    await type("SYS: LIVE SUBJECT TESTING IN PROGRESS. PURGE IMMINENT.", "error"); 
+    ask('ENTER LAB CODE:', 'login', false);
+}
+
+function ask(p, s, m) { 
+    step = s; 
+    isMask = m; 
+    DOM.pr.textContent = p; 
+    DOM.inp.value = DOM.view.textContent = ""; 
+    DOM.inp.disabled = false; 
+    DOM.blk.classList.add('active'); 
+    DOM.inp.focus(); 
+}
+
+function err(m) { 
+    DOM.term.classList.add('shake'); 
+    playBeep(140, 'triangle', 0.4); 
+    setTimeout(() => DOM.term.classList.remove('shake'), 400); 
+    addLine(m, "error"); 
+}
+
+// Выжигание системы газом/Скрамблером при провале теста
+async function terminalScramblerDie(m) {
+    clearTimeout(wordTimer);
+    DOM.blk.classList.remove('active');
+    DOM.inp.disabled = true;
+    err(m);
+    await delay(1000);
+    await type("[ПРОФЕССОР]: Сработал датчик шпионажа. Врубаю распыление газа. Конец связи.", "error");
+    await delay(1500);
+    DOM.out.innerHTML = "";
+    document.getElementById('hd').style.display = 'none';
+    playBeep(55, 'sawtooth', 2.5);
+    DOM.term.classList.add('shake');
+    
+    const errBox = addLine("\n\n\n\n      ███████  ██████  ██████   ██████  ██████  \n      ██       ██   ██ ██   ██ ██    ██ ██   ██ \n      █████    ██████  ██████  ██    ██ ██████  \n      ██       ██   ██ ██   ██ ██    ██ ██   ██ \n      ███████  ██   ██ ██   ██  ██████  ██   ██ \n\n", "error");
+    errBox.style.fontSize = "22px"; errBox.style.textAlign = "center";
+    errBox.style.textShadow = "0 0 15px #ff0000";
+    await delay(2000);
+    location.reload();
+}
+
+async function bar() {
+    const d = addLine("", 'success');
+    for (let p = 0; p <= 100; p += 5) { 
+        d.textContent = `DECRYPTING BIOLOGICAL DATA: [${"█".repeat(p/5)}${".".repeat(20-(p/5))}] ${p}%`; 
+        playBeep(450 + p * 2, 'sine', 0.02); 
+        await delay(45); 
+    }
+}
+// Перехват канала Профессором биооружия при вводе засадного кода 712
+async function triggerAmbushDialogue() {
+    clearTimeout(wordTimer);
+    DOM.blk.classList.remove('active'); DOM.inp.disabled = true;
+    playBeep(600, 'sawtooth', 0.3); playBeep(400, 'sawtooth', 0.3);
+    err("⚠️ КРИТИЧЕСКАЯ УГРОЗА: ПЕРЕХВАТ ПОРТА! ПРИНУДИТЕЛЬНОЕ ПОДКЛЮЧЕНИЕ К ИССЛЕДОВАТЕЛЬСКОМУ БУНКЕРУ S.H.F");
+    await delay(1200);
+    await type("[ДАТЧИКИ]: Зафиксирован слитый ID сотрудника 712. Шлюз лаборатории заблокирован.", "gray");
+    await type("[ПРОФЕССОР]: Так-так... Очередной сетевой мародёр решил запустить руки в наши архивы биооружия?", "success");
+    await type("[ПРОФЕССОР]: Говорит главный научный сотрудник S.H.F, руководитель программы 'Z-Вирус'. Мы проделали колоссальную работу в Сибири: высадились под видом охраны, нашли истощённых людей с мутациями, извлекли клетки вируса и теперь снаряжаем наших штурмовиков убойным биооружием для распыления.", "success");
+    await type("[ПРОФЕССОР]: И мне плевать, кто ты такой. Ответишь на вопросы по инциденту в комплексе — выдам токен прохода в архив. Соврёшь хоть раз — распылю ядовитый газ прямо в твою вентиляцию. У тебя по 15 секунд.", "success");
+    await delay(500);
+    strikes = 0; dialogueStage = 0;
+    nextDialogueStep();
+}
+
+async function nextDialogueStep() {
+    clearTimeout(wordTimer);
+    if (dialogueStage === 0) {
+        await type("\n[ПРОФЕССОР]: ВОПРОС 1. Как назывался тот самый сибирский комплекс, за которым Генштаб США заставил нас наблюдать?", "success");
+        addLine("1. Комплекс 'SPUNK-DSHH INC'", "gray"); addLine("2. Лаборатория ATLANTIS LABS", "gray"); addLine("3. Бункер RE-UNION LABS", "gray");
+        ask('ВЫБЕРИТЕ ВАРИАНТ (1-3):', 'ambush_choice', false);
+        wordTimer = setTimeout(() => terminalScramblerDie("🚨 МОЛЧАНИЕ В ЭФИРЕ. ПУСК ГАЗА. ВЫ УНИЧТОЖЕНЫ."), 15000);
+    } 
+    else if (dialogueStage === 1) {
+        await type("\n[ПРОФЕССОР]: ВОПРОС 2. Какую именно структуру правительства США наши учёные встретили в ходе наблюдения и решили объединить усилия для выгоды?", "success");
+        addLine("1. Безопасность 'Атлантиса'", "gray"); addLine("2. Некий 'Совет'", "gray"); addLine("3. Департамент Ликвидаторов", "gray");
+        ask('ВЫБЕРИТЕ ВАРИАНТ (1-3):', 'ambush_choice', false);
+        wordTimer = setTimeout(() => terminalScramblerDie("🚨 ВРЕМЯ ИСТЕКЛО. СВЯЗЬ АННУЛИРОВАНА."), 15000);
+    }
+    else if (dialogueStage === 2) {
+        await type("\n[ПРОФЕССОР]: ВОПРОС 3. С помощью какого физического метода наш штамм 'Z-Вируса' способен максимально быстро распространяться по площади секторов?", "success");
+        addLine("1. Через заражение водных артерий", "gray"); addLine("2. С помощью прямого распыления", "gray"); addLine("3. Через контактные инъекции штурмовиков", "gray");
+        ask('ВЫБЕРИТЕ ВАРИАНТ (1-3):', 'ambush_choice', false);
+        wordTimer = setTimeout(() => terminalScramblerDie("🚨 ВРЕМЯ ИСТЕКЛО. СВЯЗЬ АННУЛИРОВАНА."), 15000);
+    }
+    else if (dialogueStage === 3) {
+        await type("\n[ПРОФЕССОР]: ВОПРОС 4. Какой орган управления отдал нам прямой приказ о немедленном вывозе уцелевших заключённых для извлечения биоматериалов?", "success");
+        addLine("1. Совет директоров Атлантиса", "gray"); addLine("2. Командование Ликвидаторов", "gray"); addLine("3. Генштаб США", "gray");
+        ask('ВЫБЕРИТЕ ВАРИАНТ (1-3):', 'ambush_choice', false);
+        wordTimer = setTimeout(() => terminalScramblerDie("🚨 ВРЕМЯ ИСТЕКЛО. УДАЛЕНИЕ УЗЛА."), 15000);
+    }
+    else if (dialogueStage === 4) {
+        await type("\n[ПРОФЕССОР]: ФИНАЛ. Мы создаём идеальное, смертоносное биологическое оружие, чтобы диктовать условия всему миру. Зачем ты ищешь доступ к архиву SHF?", "success");
+        addLine("1. Я хочу получить образцы чертежей и продать их Атлантису.", "gray"); addLine("2. Я намерен скачать штаммы Z-Вируса для личных исследований.", "gray"); addLine("3. Я собираюсь опубликовать ваши преступления против человечества в открытую сеть.", "gray");
+        ask('ВЫБЕРИТЕ ВАРИАНТ (1-3):', 'ambush_choice', false);
+        wordTimer = setTimeout(() => terminalScramblerDie("🚨 ВРЕМЯ ИСТЕКЛО. ОТКЛЮЧЕНИЕ."), 15000);
+    }
+}
+
+async function successAmbushDialogue() {
+    clearTimeout(wordTimer);
+    await type("\n[ПРОФЕССОР]: Великолепно! Ты ответил без единой ошибки и доказал, что детально изучил сибирские документы.", "success");
+    await type("[ПРОФЕССОР]: Слушай и записывай. Истинный токен авторизации в главные серверные боксы S.H.F — z-virus outbreak", "success");
+    await type("[ПРОФЕССОР]: Вводи его на стартовом экране, забирай биохимические формулы и держи язык за зубами. Конец связи.", "success");
+    playBeep(300, 'triangle', 0.6);
+    await delay(3500);
+    DOM.out.innerHTML = "";
+    step = 'login';
+    ask('ENTER LAB CODE:', 'login', false);
+}
+
+// Главное меню секретной сети S.H.F (при вводе токена z-virus outbreak)
+async function openSecureLasMenu() {
+    await type("===================================================", "gray");
+    await type("ACCESS GRANTED. S.H.F CLASS-A BIOWEAPON CORE v1.0", "success");
+    await type("ПОДКЛЮЧЕНИЕ К ЦЕНТРАЛЬНОМУ ХРАНИЛИЩУ ШТАММОВ УСПЕШНО.", "success");
+    await type("1. МОНИТОРИНГ МУТАЦИЙ В ЖИВЫХ КАМЕРАХ", "success");
+    await type("2. УПРАВЛЕНИЕ СИСТЕМОЙ РАСПЫЛЕНИЯ Z-ВИРУСА", "success");
+    await type("3. СЕКРЕТНЫЙ РЕЕСТР БИОХИМИЧЕСКОГО ОРУЖИЯ S.H.F", "success");
+    await type("4. РАЗОРВАТЬ ИССЛЕДОВАТЕЛЬСКИЙ СЕАНС", "success");
+    await type("===================================================", "gray");
+    ask('ENTER COMMAND:', 'las_menu', false);
+}
+DOM.inp.oninput = () => { if(step !== 'game') DOM.view.textContent = isMask ? "*".repeat(DOM.inp.value.length) : DOM.inp.value; };
+DOM.inp.onkeydown = async (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault(); 
+
+    const v = DOM.inp.value, cv = v.trim(); if (!v) return;
+
+    DOM.blk.classList.remove('active'); DOM.inp.disabled = true; 
+    addLine(DOM.pr.textContent + " " + (isMask ? "*".repeat(v.length) : cv), 'success'); 
+    await delay(300);
+    
+    if (step === 'login') {
+        if (cv === '712') {
+            triggerAmbushDialogue(); // Запуск допроса Профессора
+        } else if (cv === CFG.REAL_TOKEN) {
+            await bar(); // Прогресс-бар дешифрации вируса
+            await openSecureLasMenu(); // Главное меню SHF
+        } else {
+            err("LAB SECURITY BREACH: ACCESS DENIED. INTRUDER PROTOCOL ENGAGED.");
+            await delay(1500); ask('ENTER LAB CODE:', 'login', false);
+        }
+    } 
+    else if (step === 'ambush_choice') {
+        clearTimeout(wordTimer);
+        
+        // ВОПРОС 1: Комплекс SPUNK-DSHH INC
+        if (dialogueStage === 0) {
+            if (cv === '1') { dialogueStage = 1; nextDialogueStep(); } 
+            else { await terminalScramblerDie("🚨 [ПРОФЕССОР]: Неверно! Ты не знаешь, где мы вели разведку! Включаю газ!"); }
+        } 
+        // ВОПРОС 2: Некий Совет
+        else if (dialogueStage === 1) {
+            if (cv === '2') { dialogueStage = 2; nextDialogueStep(); } 
+            else { await terminalScramblerDie("🚨 [ПРОФЕССОР]: Ошибка! Наших союзников по саботажу зовут иначе. Ликвидация."); }
+        }
+        // ВОПРОС 3: С помощью распыления
+        else if (dialogueStage === 2) {
+            if (cv === '2') { dialogueStage = 3; nextDialogueStep(); } 
+            else { await terminalScramblerDie("🚨 [ПРОФЕССОР]: Чужак! Метод распространения Z-Вируса совершенно другой. Пуск газа."); }
+        }
+        // ВОПРОС 4: Генштаб США
+        else if (dialogueStage === 3) {
+            if (cv === '3') { dialogueStage = 4; nextDialogueStep(); } 
+            else { await terminalScramblerDie("🚨 [ПРОФЕССОР]: Ошибка в знании высшего руководства приказа. Эксперимент окончен."); }
+        }
+        // ВОПРОС 5: Мотивы (Ловушка шпиона Атлантиса)
+        else if (dialogueStage === 4) {
+            if (cv === '2') { successAmbushDialogue(); } 
+            else if (cv === '1') {
+                // Моментальная смерть при попытке продать чертежи Атлантису
+                await terminalScramblerDie("🚨 [ПРОФЕССОР]: Хочешь продать наши наработки Атлантису?! Проклятый штабной шпион! Умри в камере!");
+            } else { await terminalScramblerDie("🚨 [ПРОФЕССОР]: Очередной предатель человечества. Нам такие в лаборатории не нужны. Выжигаю порт."); }
+        }
+    }
+    // Обработчик Главного меню биолаборатории S.H.F
+    else if (step === 'las_menu') {
+        if (cv === '4') {
+            await type(">>> РАЗРЫВ СОЕДИНЕНИЯ С БИОХИМИЧЕСКИМ ЯДРОМ S.H.F...", "gray");
+            await delay(1000); DOM.out.innerHTML = ""; step = 'login';
+            ask('ENTER LAB CODE:', 'login', false);
+        } else if (cv === '1' || cv === '2' || cv === '3') {
+            await type(">>> СИСТЕМА: РАЗДЕЛ ЗАБЛОКИРОВАН. ОЖИДАНИЕ РЕЗУЛЬТАТОВ БИО-АНАЛИЗА МУТАЦИЙ...", "error");
+            await delay(1500); ask('ENTER COMMAND:', 'las_menu', false);
+        } else {
+            err("НЕВЕРНАЯ КОМАНДА."); await delay(1000); ask('ENTER COMMAND:', 'las_menu', false);
+        }
+    }
+};
+document.onclick = () => DOM.inp.disabled || DOM.inp.focus(); 
+window.onload = runBootLogs;
+</script>
+</body>
+</html>
