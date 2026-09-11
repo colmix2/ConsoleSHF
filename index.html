@@ -78,11 +78,14 @@
             align-items: center;
             text-align: center;
         }
-        .header-logo-text {
-            font-size: 32px;
-            letter-spacing: 6px;
-            margin-bottom: 10px;
-            text-shadow: 0 0 15px var(--glow);
+        .hub-logo {
+            display: block;
+            width: 250px;           /* Большой размер как в TFB */
+            height: auto;
+            margin: 0 auto 20px auto; 
+            opacity: 0.98;
+            pointer-events: none;
+            filter: drop-shadow(0 0 25px var(--glow)); /* Плотная янтарная тень */
         }
         .line {
             line-height: 1.6;
@@ -149,10 +152,12 @@
         .gray { color: rgba(230, 161, 0, 0.45); } 
     </style>
 </head>
+
 <body>
 <div class="terminal-box" id="term">
     <div class="header" id="hd">
-        <div class="header-logo-text">[ S.H.F ]</div>
+        <!-- Картинка возвращена и ссылается на TFB_logo.png, как ты просил -->
+        <img src="TFB_logo.png" class="hub-logo" alt="S.H.F LOGO">
         SECRET HIGHLY FIGHTERS // BIOWEAPON & CHEMICAL WARFARE NETWORK
     </div>
     <div id="out"></div>
@@ -166,7 +171,7 @@
 </div>
 <script>
 const CFG = { 
-    REAL_TOKEN: "z-virus outbreak", // Истинный токен доступа в биологическое крыло
+    REAL_TOKEN: "z-virus outbreak", 
     SPD: 15 
 };
 const DOM = { 
@@ -212,6 +217,7 @@ function addLine(txt, cls = "") {
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); 
     return d;
 }
+
 async function type(txt, cls = "") {
     const d = addLine("", cls);
     for (let i = 0; i < txt.length; i++) {
